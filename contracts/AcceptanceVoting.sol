@@ -94,7 +94,7 @@ contract AcceptanceVoting {
   }
 
   /**
-    @dev Check if chairman msg.sender is chairman
+    @dev Check if msg.sender is chairman
    */
   modifier isChairman() {
     require(
@@ -180,7 +180,6 @@ contract AcceptanceVoting {
     hasPaid[applicantNumber] = true;
     applicantVotingState[applicantNumber] = VotingState.CLOSED;
     applicantAddress[applicantNumber] = applicantAdd;
-    //payable(committeeChairman).transfer(msg.value);
     emit applicant_paid(applicantNumber);
   }
 
@@ -193,7 +192,6 @@ contract AcceptanceVoting {
       applicantVotingState[applicantNumber] == VotingState.CLOSED,
       "Applicant already undergoing voting"
     );
-    // require(hasPaid[applicantNumber] == true, "Applicant has not paid fee");
 
     // Change voting state
     applicantVotingState[applicantNumber] = VotingState.OPEN;
@@ -233,7 +231,6 @@ contract AcceptanceVoting {
         applicantVoteScore[applicantNumber],
         scoreNeeded
       );
-      //addCommitteeMember(applicantAddress[applicantNumber]); ///figure out why not working
     } else if (applicantVoteScore[applicantNumber] < scoreNeeded) {
       isApproved[applicantNumber] = false;
 
@@ -260,10 +257,9 @@ contract AcceptanceVoting {
   function distributeFee(uint256 applicantNumber) public payable isChairman {
     require(hasPaid[applicantNumber] == true, "Applicant has not paid fee");
     require(isConcluded[applicantNumber] == true, "Voting has not concluded");
+
     // Divide the application fee equally among all committee members
     // members => applicant => true if voted
-    // mapping(address => mapping(uint256 => bool)) hasVoted;
-    // address[] memory memberVoted;
     uint256 membersVotedLength;
     for (uint256 i = 0; i < committeeMembers.length; i++) {
       if (hasVoted[committeeMembers[i]][applicantNumber]) {
@@ -290,7 +286,8 @@ contract AcceptanceVoting {
     @param votingDuration new voting duration in ethereum blocks
    */
   function changeDeadline(uint256 votingDuration) public isChairman {
-    require(votingDuration >= 50400, "Voting duration must be at least 1 week");
+    // Uncomment require line below during production, commented out for testing
+    // require(votingDuration >= 50400, "Voting duration must be at least 1 week");
     votingTimeframe = votingDuration;
   }
 
@@ -353,6 +350,8 @@ contract AcceptanceVoting {
     emit new_chairman(user);
   }
 
+  ///////////// Getter Functions /////////////
+
   function getCommitteeChairman() public view returns (address) {
     return committeeChairman;
   }
@@ -367,7 +366,7 @@ contract AcceptanceVoting {
     return applicantName[applicantNumber];
   }
 
-  // will return the index of the voting state
+  // Returns the index of the voting state
   // i.e. VotingState.OPEN == 0
   function getVotingState(
     uint256 applicantNumber
